@@ -14,7 +14,7 @@ import "@babylonjs/core/Debug/debugLayer";
 const canvas = document.getElementById("renderCanvas");
 const engine = new Engine(canvas, true);
 
-async function createScene() {
+function createScene() {
   const scene = new Scene(engine);
 
   // Camera and lightening
