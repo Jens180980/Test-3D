@@ -12,6 +12,8 @@
   "dependencies": {
     "babylonjs": "^5.44.0",
     "babylonjs-gui": "^5.44.0",
-    "babylonjs-loaders": "^5.44.0"
+    "babylonjs-loaders": "^5.44.0",
+    "babylonjs-serializers": "^5.45.0",
+    "earcut": "^2.2.4"
   }
 }
