@@ -34,7 +34,27 @@ function createScene() {
   // Build models
   const ground = buildGround(15, 16);
   const dwellings = buildDwellings();
-  const car = buildCar();
+  //const car = buildCar();
+
+  BABYLON.SceneLoader.ImportMeshAsync(
+    "",
+    "https://assets.babylonjs.com/meshes/",
+    "car.babylon"
+  ).then(() => {
+    const car = scene.getMeshByName("car");
+    car.position = new BABYLON.Vector3(-6, 0.24, 1);
+    car.scaling = new BABYLON.Vector3(1.5, 1.5, 1.5);
+    const wheelRB = scene.getMeshByName("wheelRB");
+    const wheelRF = scene.getMeshByName("wheelRF");
+    const wheelLB = scene.getMeshByName("wheelLB");
+    const wheelLF = scene.getMeshByName("wheelLF");
+
+    scene.beginAnimation(wheelRB, 0, 30, true);
+    scene.beginAnimation(wheelRF, 0, 30, true);
+    scene.beginAnimation(wheelLB, 0, 30, true);
+    scene.beginAnimation(wheelLF, 0, 30, true);
+    scene.beginAnimation(car, 0, 210, true);
+  });
 
   scene.debugLayer.show();
   // BABYLON.GLTF2Export.GLBAsync(scene, "village").then((glb) => {
@@ -209,13 +229,27 @@ const buildCar = () => {
 
   car.material = carMat;
 
-  car.position.y = 0.15;
+  car.position.y = 0.3;
   car.rotation.x = -Math.PI / 2;
+
+  const wheelMat = new BABYLON.StandardMaterial("wheelMat");
+  wheelMat.diffuseTexture = new BABYLON.Texture(
+    "https://assets.babylonjs.com/environments/wheel.png"
+  );
+
+  const wheelUV = [];
+
+  wheelUV[0] = new BABYLON.Vector4(0, 0, 1, 1);
+  wheelUV[1] = new BABYLON.Vector4(0, 0.5, 0, 0.5);
+  wheelUV[2] = new BABYLON.Vector4(0, 0, 1, 1);
 
   const wheelRB = BABYLON.MeshBuilder.CreateCylinder("wheelRB", {
     diameter: 0.125,
     height: 0.05,
+    faceUV: wheelUV,
   });
+
+  wheelRB.material = wheelMat;
   wheelRB.parent = car;
   wheelRB.position = new BABYLON.Vector3(-0.2, 0.035, -0.1);
 
@@ -228,7 +262,98 @@ const buildCar = () => {
   const wheelLF = wheelRB.clone("wheelLF");
   wheelLF.position.y = -0.2 - 0.035;
   wheelLF.position.x = 0.1;
+
+  // Wheel animations
+  const animWheel = new BABYLON.Animation(
+    "wheelAnim",
+    "rotation.y",
+    30,
+    BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+    BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
+  );
+  const wheelKeys = [];
+  wheelKeys.push(
+    {
+      frame: 0,
+      value: 0,
+    },
+    {
+      frame: 30,
+      value: 2 * Math.PI,
+    }
+  );
+
+  animWheel.setKeys(wheelKeys);
+
+  wheelRB.animations = [];
+  wheelRB.animations.push(animWheel);
+
+  // Car animation
+  const animCar = new BABYLON.Animation(
+    "carAnimation",
+    "position.x",
+    30,
+    BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+    BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
+  );
+
+  const carKeys = [];
+
+  carKeys.push({
+    frame: 0,
+    value: -4,
+  });
+
+  carKeys.push({
+    frame: 150,
+    value: 4,
+  });
+
+  carKeys.push({
+    frame: 210,
+    value: 4,
+  });
+
+  animCar.setKeys(carKeys);
+
+  car.animations = [];
+  car.animations.push(animCar);
+
+  // Download model
+  //const download = doDownload("car", car);
 }; // End buildCar Fn
+
+// Download mesh Fn
+
+let objectUrl;
+function doDownload(filename, mesh) {
+  if (objectUrl) {
+    window.URL.revokeObjectURL(objectUrl);
+  }
+
+  const serializedMesh = BABYLON.SceneSerializer.SerializeMesh(mesh);
+
+  const strMesh = JSON.stringify(serializedMesh);
+
+  if (
+    filename.toLowerCase().lastIndexOf(".babylon") !== filename.length - 8 ||
+    filename.length < 9
+  ) {
+    filename += ".babylon";
+  }
+
+  const blob = new Blob([strMesh], { type: "octet/stream" });
+
+  // turn blob into an object URL; saved as a member, so can be cleaned out later
+  objectUrl = (window.webkitURL || window.URL).createObjectURL(blob);
+
+  const link = window.document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  const click = document.createEvent("MouseEvents");
+  click.initEvent("click", true, false);
+  link.dispatchEvent(click);
+}
 
 // *****************************************************************
 const scene = createScene();
